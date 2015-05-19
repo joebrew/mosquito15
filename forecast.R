@@ -7,12 +7,12 @@ library(randomForest)
 # DEFINE WORKING DIRECTORIES
 #####
 if(Sys.info()['sysname'] == 'Windows'){
-  trap_dir <- 'C:/Users/BrewJR/Documents/fdoh/public/mosquito_forecast/trap_data'
-  weather_dir <- 'C:/Users/BrewJR/Documents/fdoh/public/mosquito_forecast/weather_data'
+  trap_dir <- 'C:/Users/BrewJR/Documents/mosquito15/trap_data'
+  weather_dir <- 'C:/Users/BrewJR/Documents/mosquito15/weather_data'
   
 } else {
-  trap_dir <- '/home/joebrew/Documents/fdoh/public/mosquito_forecast/trap_data'
-  weather_dir <- '/home/joebrew/Documents/fdoh/public/mosquito_forecast/weather'
+  trap_dir <- '/home/joebrew/Documents/mosquito15/trap_data'
+  weather_dir <- '/home/joebrew/Documents/mosquito15/weather_data'
   
 }
 setwd(trap_dir)
@@ -101,8 +101,9 @@ if(file.exists('weather.csv')){
     rf <- getSummarizedWeather("GNV", 
                                start_date = paste0(year_seq[i], '-01-01'), 
                                end_date = end,
-                               opt_custom_columns = TRUE,
-                               custom_columns = c(2,4,20))
+                               opt_all_columns = TRUE)
+    
+    rf$Date <- as.character(rf$Date)
     
     # Put into list
     weather_list[[i]] <- rf
@@ -110,7 +111,7 @@ if(file.exists('weather.csv')){
   }
   
   # Combine all weather into one dataframe
-  weather <- do.call("rbind", weather_list)
+  weather <- rbind.fill(weather_list)
   rm(min_year, max_year, year_seq, i, weather_list, rf)
   
   # Write csv
@@ -121,28 +122,27 @@ if(file.exists('weather.csv')){
 
 # Format date
 weather$Date <- as.Date(weather$Date)
-
-#####
-# GET MORE RECENT WEATHER IF NEEDED
-#####
-if(max(weather$Date) < (Sys.Date() - 1)){
-  new_weather <- getSummarizedWeather("GNV", 
-                                      start_date = max(weather$Date) +1, 
-                                      end_date = Sys.Date() - 1,
-                                      opt_custom_columns = TRUE,
-                                      custom_columns = c(2,4,20))
-  weather <- rbind(weather, new_weather)
-  
-  # Clean up
-  # Format date
-  weather$Date <- as.Date(weather$Date)
-  
-  
-  # Write csv
-  setwd(weather_dir)
-  write.csv(weather, 'weather.csv', row.names = FALSE)
-  weather <- read.csv('weather.csv')
-}
+# 
+# #####
+# # GET MORE RECENT WEATHER IF NEEDED
+# #####
+# if(max(weather$Date) < (Sys.Date() - 1)){
+#   new_weather <- getSummarizedWeather("GNV", 
+#                                       start_date = max(weather$Date) +1, 
+#                                       end_date = Sys.Date() - 1,
+#                                       opt_all_columns = TRUE)
+#   weather <- rbind(weather, new_weather)
+#   
+#   # Clean up
+#   # Format date
+#   weather$Date <- as.Date(weather$Date)
+#   
+#   
+#   # Write csv
+#   setwd(weather_dir)
+#   write.csv(weather, 'weather.csv', row.names = FALSE)
+#   weather <- read.csv('weather.csv')
+# }
 
 #####
 # CLEAN UP A BIT MORE
@@ -151,15 +151,16 @@ if(max(weather$Date) < (Sys.Date() - 1)){
 # Format date
 weather$Date <- as.Date(weather$Date)
 
-
-# Get right structure for columns
-for (j in 2:ncol(weather)){
-  suppressWarnings(weather[,j] <- as.numeric(as.character(weather[,j])))
-  weather[,j][which(is.na(weather[,j]))] <- 0
-}
-
 # Order
 weather <- weather[order(weather$Date),]
+
+# YONI TIME!
+
+# Number of mosquitoes observed at previous collection
+ts$previous_mosquitoes <- 
+  c(NA, ts$tot[1:(nrow(ts) - 1)])
+
+# Previous days max/min/avg temp and precipitation
 
 #############################################################
 #############################################################
