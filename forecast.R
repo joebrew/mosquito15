@@ -149,11 +149,40 @@ weather$Date <- as.Date(weather$Date)
 # Order
 weather <- weather[order(weather$Date),]
 
+# Fix precipitation 
+weather$PrecipitationIn <- as.numeric(as.character(weather$PrecipitationIn))
+weather$PrecipitationIn[which(is.na(weather$PrecipitationIn))] <- 0
+
 # YONI TIME!
 
 # Number of mosquitoes observed at previous collection
 ts$previous_mosquitoes <- 
   c(NA, ts$tot[1:(nrow(ts) - 1)])
+
+
+# Join weather and ts
+ts <- inner_join(ts, weather, by = c('date' = 'Date'))
+
+# Make a mosquitoes per trap var
+ts$y <- ts$tot / ts$n_traps
+
+# Make a previous mosquitoes per trap
+ts$previous_y <- 
+  c(NA, ts$y[1:(nrow(ts) - 1)])
+
+# Make a training dataset
+train <- ts[-1,c('y', 'Mean_TemperatureF', 'PrecipitationIn',
+               'Min_TemperatureF', 'Max_TemperatureF', 'previous_y')]
+
+# Quick and easy model
+fit <- randomForest(y ~ previous_y,
+                    data = train)
+
+summary(fit)
+plot(predict(fit), train$y)
+
+fake <- data.frame(previous_y = 1:2000)
+plot(fake$previous_y, predict(fit, fake),)
 
 # Previous days max/min/avg temp and precipitation
 
