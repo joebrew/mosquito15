@@ -6,15 +6,10 @@ library(randomForest)
 #####
 # DEFINE WORKING DIRECTORIES
 #####
-if(Sys.info()['sysname'] == 'Windows'){
-  trap_dir <- 'C:/Users/BrewJR/Documents/mosquito15/trap_data'
-  weather_dir <- 'C:/Users/BrewJR/Documents/mosquito15/weather_data'
-  
-} else {
-  trap_dir <- '/home/joebrew/Documents/mosquito15/trap_data'
-  weather_dir <- '/home/joebrew/Documents/mosquito15/weather_data'
-  
-}
+proj_root <- getwd()
+trap_dir <- paste0(proj_root, "/trap_data")
+weather_dir <- paste0(proj_root, "/weather_data")
+
 setwd(trap_dir)
 
 ####
