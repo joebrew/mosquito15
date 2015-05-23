@@ -58,7 +58,7 @@ for (i in 1:length(myfiles)){
   
 # Which are mismatches?
 temp[mismatches]
-
+table(mismatches)
 
 ####
 #CBIND ALL ELEMENTS OF THE MYFILES LIST INTO ONE DF
