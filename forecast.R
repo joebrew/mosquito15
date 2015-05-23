@@ -36,6 +36,30 @@ for (i in 1:length(myfiles)){
             format="%m.%d.%Y")
 }
 
+#####
+# FIND ANY MISMATCH BETWEEN FILE NAME AND FIRST ROW DATE
+#####
+mismatches <- rep(FALSE, length(myfiles))
+for (i in 1:length(myfiles)){
+  
+  # date from filename
+  date_name <- 
+    as.Date(gsub('.csv', '', temp[i]), format = '%b%d%Y')
+  
+  # date from first row
+  date_row <- 
+    myfiles[[i]]$date[1]
+  
+  # Fix mismatch
+  if( date_name != date_row ){
+    mismatches[i] <- TRUE
+  }
+}
+  
+# Which are mismatches?
+temp[mismatches]
+
+
 ####
 #CBIND ALL ELEMENTS OF THE MYFILES LIST INTO ONE DF
 ####
