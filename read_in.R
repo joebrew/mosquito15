@@ -180,7 +180,7 @@ if(max(weather$date) < (Sys.Date() - 1)){
   
   # Clean up
   # Format date
-  weather$Date <- as.Date(weather$Date)
+  weather$date <- as.Date(weather$date)
   
   
   # Write csv
