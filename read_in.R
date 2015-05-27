@@ -197,6 +197,9 @@ weather$PrecipitationIn <- suppressWarnings(
   as.numeric(as.character(weather$PrecipitationIn)))
 weather$PrecipitationIn[which(is.na(weather$PrecipitationIn))] <- 0
 
+# Return to project root
+setwd(proj_root)
+
 # At this point you've got 
 #### diseases: a simple dictionary of which mosquitoes carry which diseases
 #### raw_data: number of mosquitoes by date, mosquito type, and trap
