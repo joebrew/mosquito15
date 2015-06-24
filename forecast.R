@@ -106,17 +106,39 @@ weather_augmented <- weather_augmented[,!colnames(weather_augmented) %in% c('Max
 #####
 # CREATE DATAFRAME WITH GENERATED FEATURES FOR MODEL TRAINING
 #####
-train <- left_join(ts, weather_augmented, by = c('date' = 'Date'))
+train <- left_join(ts, weather_augmented, by = 'date')
 
 # Remove date so that it's not used in modeling
 train_date <- train$date
 train$date <- NULL
 
+# Remove any NA columns
+train_names <- names(train)
+bads <- rep(FALSE, length(train_names))
+for (j in 1:ncol(train)){
+  column <- train[,train_names[j]]
+  if(length(which(is.na(column))) > 0){
+    bads[j] <- TRUE
+  }
+}
+train <- train[,!bads]
+
+# Fix weird joined column issues
+train <- train[,names(train)[!grepl('[.]x', names(train))]] #get rid of .x columns
+names(train) <- gsub('[.]y', '', names(train)) #rename .y columns
+train <- train[,!duplicated(names(train))] # remove any duplicates
+
+# Exclude non-historical observations
+train <- train[,c('n_traps', 'n', 
+                  names(train)[grepl('_minus_', names(train))])]
+
 #####
 # TRAIN MODEL
 #####
-fit <- randomForest(tot ~ . ,
-                    data = train)
+fit <- randomForest(n ~ . ,
+                    data = train,
+                    ntree = 5000,
+                    na.action = 'na.omit')
 
 # Also get a predictions matrix
 obs_mat <- predict(fit,
@@ -125,21 +147,21 @@ obs_mat <- predict(fit,
 # And error matrix
 temp <- as.matrix(obs_mat$individual)
 error_mat <- apply(temp, 2, function(x){
-  x - train$tot
+  x - train$n
 })
 rm(temp)
 
 # Predict on train
-train$predicted <- predict(fit, train)
+train$predicted <- predict(fit)
 
-plot(train_date, train$tot, type = 'l')
+plot(train_date, train$n, type = 'l')
 lines(train_date, train$predicted, col = 'red')
 
 #####
 # PREDICT ON CURRENT
 #####
 
-current <- weather_augmented[which(weather_augmented$Date >= (Sys.Date() - 30)),]
+current <- weather_augmented[which(weather_augmented$date >= (Sys.Date() - 30)),]
 current$n_traps <- 10
 
 current$predicted <- predict(fit, current)
@@ -149,13 +171,13 @@ pred_mat <- predict(fit, current, predict.all = TRUE)
 
 # Add error terms from the observed data:
 temp <- as.matrix(pred_mat$individual)
-for (j in 1:ncol(temp)) {
-  errors <- sample(error_mat[, j], nrow(temp),
-                   replace = TRUE)
-  # temp[,j] <- temp[,j] + errors # ! too big - currently not adding errors
-  temp[,j] <- temp[,j] + errors
-  
-}
+# for (j in 1:ncol(temp)) {
+#   errors <- sample(error_mat[, j], nrow(temp),
+#                    replace = TRUE)
+#   # temp[,j] <- temp[,j] + errors # ! too big - currently not adding errors
+#   temp[,j] <- temp[,j] + errors
+#   
+# }
 pred_mat_with_error <- temp
 rm(temp)
 
@@ -168,14 +190,18 @@ current$predicted <- pred_mat$aggregate
 # Get confidence bounds
 current$lwr <- apply(pred_mat_with_error, 1, 
                      function(x){
-                       quantile(x, probs = 0.025)
+#                        quantile(x, probs = 0.025)
+                       quantile(x, probs = 0.1)
+                       
                      })
 current$upr <- apply(pred_mat_with_error, 1,
                      function(x) {
-                       quantile(x, probs = 0.975)
+#                        quantile(x, probs = 0.975)
+                       quantile(x, probs = 0.9)
+                       
                      })
 
-plot(current$Date,
+plot(current$date,
      current$predicted,
      type = 'l')
 
@@ -183,55 +209,22 @@ plot(current$Date,
 #####
 # COMBINE TRAIN AND CURRENT
 #####
-train_small <- train[,'tot']
-train_small$Date <- train_date
+train_small <- train[,'n']
+train_small$date <- train_date
 train_small$observed <- TRUE
 
-current_small <- current[,c('predicted', 'Date')]
+current_small <- current[,c('predicted', 'date')]
 current_small$observed <- TRUE
-names(current_small)[1] <- 'tot'
+names(current_small)[1] <- 'n'
 
 combined <- rbind(train_small, current_small)
 
-plot(combined$Date, combined$tot, type = 'n')
+plot(combined$date, combined$n, type = 'n')
 
-lines(train_small$Date, train_small$tot)
-lines(current_small$Date, current_small$tot, col = 'red')
-
+lines(train_small$date, train_small$n)
+lines(current_small$date, current_small$n, col = 'red')
 
 #####
-# PREDICT ON WEATHER AUGMENTED
+# SAVE CHECKPOINT
 #####
-weather_augmented <- left_join(weather_augmented, train)
-
-
-# Get number of traps
-weather_augmented$n_traps[1] <- 6
-for (i in 1:nrow(weather_augmented)){
-  while(is.na(weather_augmented$n_traps[i])){
-    weather_augmented$n_traps[i] <- weather_augmented$n_traps[i-1]
-  }
-}
-
-weather_augmented$predicted <- predict(fit, weather_augmented)
-
-plot(weather_augmented$Date, weather_augmented$predicted, type = 'l',
-     col = adjustcolor('black', alpha.f = 0.3),
-     ylim = c(0, 8000),
-     xlim = as.Date(c('2012-05-01', '2015-05-30')),
-     xlab = 'Date',
-     ylab = 'Number of trapped mosquitos',
-     cex.axis = 0.6)
-lines(train_small$Date, train_small$tot,
-      col = adjustcolor('darkred', alpha.f = 0.6))
-abline(v = Sys.Date(), lty = 3)
-
-legend('topright',
-       lty = c(1, 1, 3),
-       col = c(adjustcolor('black', alpha.f = 0.3),
-               adjustcolor('darkred', alpha.f = 0.6),
-               'black'),
-       legend = c('Predicted',
-                  'Observed',
-                  'Today'),
-       cex = 0.8)
+save.image(paste0(proj_root, '/checkpoint.RData'))
