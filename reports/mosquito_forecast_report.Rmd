@@ -37,7 +37,7 @@ img <- readPNG('../images/logo.png')
 grid.raster(img)
 ```
 
-# Header 1  
+# Overview
 
 This is a main header with important stuff under it.
 
@@ -48,13 +48,16 @@ g <- ggplot(data = future_agg) +
 #   geom_line(aes(x = date, y = lower ), color = 'red') +
 #   geom_line(aes(x = date, y = upper ), color = 'red') +
   geom_ribbon(aes(x = date, y = upper, ymin = lower, ymax = upper), alpha = 0.5) +
-  geom_line(color = 'darkred', lwd = 3) 
+  geom_line(color = 'darkred', lwd = 3) + 
+  xlab('Date') + 
+  ylab('Mosquitos')
 g 
 ```
-## Header 2  
+
+# Most recent collection details
 
 This is a sub-header.
 
-### Header 3
+# Forecast details
 
 I don't even know if this will render.

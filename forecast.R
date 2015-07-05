@@ -1,4 +1,6 @@
+library(plyr)
 library(xts)
+library(dplyr)
 #library(mgcv)
 
 # Read in most recent data
@@ -75,6 +77,10 @@ for (i in 1:nrow(df)){
 # Make trap a factor
 df$trap <- factor(df$trap)
 
+# Get the number of traps for each collection date
+temp <- ts[,c('date', 'n_traps')]
+df <- left_join(df, temp)
+
 ####
 # MODEL AND PREDICT
 ####
@@ -83,17 +89,21 @@ df$trap <- factor(df$trap)
 train <- df[which(!is.na(df$n)),]
 future <- df[which(df$date > max(train$date)),]
 
+# Adjust future to make sure that n_traps are specified
+future$n_traps <- 10
+
 # DEFINE MODEL FORMULA
 y <- 'n'
 vars <- c(
+  'n_traps',
   #paste0('n_minus_', vec),
   'n_minus_21',
   'trap',
   'Mean_TemperatureF_10_21',
   #'Min_TemperatureF_10_21',
   #'Max_TemperatureF_10_21',
-  'PrecipitationIn_10_21'
-  #'day_number',
+  'PrecipitationIn_10_21',
+  'day_number'
   #'Mean_Wind_SpeedMPH_10_21'
 )
 x <- paste(vars, collapse = ' + ')
@@ -104,9 +114,9 @@ system.time(
   fit <- randomForest(model_formula,
                       data = train,
                       na.action = na.omit,
-                      ntree = 10000,
+                      ntree = 50000,
                       predict.all = TRUE)
-)
+) # 350 seconds
 
 # #### LENDABLE STYLE CIS
 # #####
@@ -173,8 +183,7 @@ future_agg <- future %>%
   group_by(date) %>% 
   summarise(n = sum(predicted, na.rm = T))
 
-# Need to make this stuff into a loop! 
-
+# Get confidence bands 
 for (i in 1:nrow(future_agg)){
   date <- future_agg$date[i]
   rows_in_question <- which(future$date == date)
@@ -197,6 +206,11 @@ for (i in 1:nrow(future_agg)){
 }
 future_agg <- cbind(future_agg, old_temp)
 
+
+# Create a ts with the future predictions
+future_agg$n_traps <- 10
+
+ts_with_future <- rbind.fill(ts, future_agg)
 #####
 # SAVE CHECKPOINT
 #####
