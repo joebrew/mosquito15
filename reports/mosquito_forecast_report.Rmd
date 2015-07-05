@@ -12,6 +12,11 @@ graphics: yes
 
 ---
 
+\begin{center}
+Joe Brew \\
+Ben Brew \\
+Yoni Teitelbaum
+\end{center}
 
 ```{r, echo = FALSE}
 library(knitr)
@@ -23,6 +28,7 @@ opts_chunk$set(comment=NA, warning = FALSE, message = FALSE, echo = FALSE)
 # setwd(wd)
 library(png)
 library(grid)
+library(ggplot2)
 load('../checkpoint.RData')
 ```
 
@@ -35,7 +41,16 @@ grid.raster(img)
 
 This is a main header with important stuff under it.
 
-
+```{r}
+g <- ggplot(data = future_agg) + 
+  aes(x = date, y = predicted) +
+  theme_bw() +
+#   geom_line(aes(x = date, y = lower ), color = 'red') +
+#   geom_line(aes(x = date, y = upper ), color = 'red') +
+  geom_ribbon(aes(x = date, y = upper, ymin = lower, ymax = upper), alpha = 0.5) +
+  geom_line(color = 'darkred', lwd = 3) 
+g 
+```
 ## Header 2  
 
 This is a sub-header.
