@@ -40,18 +40,28 @@ vars <- c('Mean_TemperatureF',
           'PrecipitationIn',
           'Mean_Wind_SpeedMPH')
 
+lows <- 10:30
+highs <- 15:45
+
 for (var in vars){
-  # Create new variable
-  column_name <- paste0(var, '_10_21')
-  df[,column_name] <- NA
-  
-  for (i in 1:nrow(df)){
-    date <- df$date[i]
-    vals <- NA
-    vals <- weather[which(weather$date >= (date - 21) &
-                            weather$date <= date - 10),var]
-    val <- mean(vals, na.rm = TRUE)
-    df[i,column_name] <- val
+  print(paste0('Working on ', var, '\n'))
+  for(low in lows){
+    for(high in highs){
+      if(low < high){
+        cat(paste0(var, '_', low, '_', high, '\n'))
+        # Create new variable
+        column_name <- paste0(var, '_', low, '_', high)
+        df[,column_name] <- NA
+        for (i in 1:nrow(df)){
+          date <- df$date[i]
+          vals <- NA
+          vals <- weather[which(weather$date >= (date - high) &
+                                  weather$date <= date - low),var]
+          val <- mean(vals, na.rm = TRUE)
+          df[i,column_name] <- val
+        }
+      }
+    }
   }
 }
 
@@ -92,20 +102,24 @@ future <- df[which(df$date > max(train$date)),]
 # Adjust future to make sure that n_traps are specified
 future$n_traps <- 10
 
+#save.image('/home/joebrew/Desktop/fast.RData')
+
 # DEFINE MODEL FORMULA
 y <- 'n'
-vars <- c(
-  'n_traps',
-  #paste0('n_minus_', vec),
-  'n_minus_21',
-  'trap',
-  'Mean_TemperatureF_10_21',
-  #'Min_TemperatureF_10_21',
-  #'Max_TemperatureF_10_21',
-  'PrecipitationIn_10_21',
-  'day_number'
-  #'Mean_Wind_SpeedMPH_10_21'
-)
+# vars <- c(
+#   'n_traps',
+#   paste0('n_minus_', vec),
+#   ######## ADD STUFF HERE
+#   'n_minus_21',
+#   'trap',
+#   'Mean_TemperatureF_10_21',
+#   #'Min_TemperatureF_10_21',
+#   #'Max_TemperatureF_10_21',
+#   'PrecipitationIn_10_21',
+#   'day_number'
+#   #'Mean_Wind_SpeedMPH_10_21'
+# )
+vars <- names(df)[which(!names(df) %in% c('date', 'year', 'n'))]
 x <- paste(vars, collapse = ' + ')
 
 model_formula <- as.formula(paste0(y, ' ~ ', x))
@@ -114,9 +128,10 @@ system.time(
   fit <- randomForest(model_formula,
                       data = train,
                       na.action = na.omit,
-                      ntree = 50000,
+                      ntree = 1000,
                       predict.all = TRUE)
-) # 350 seconds
+) 
+# 1351 / 60 
 
 # #### LENDABLE STYLE CIS
 # #####
@@ -217,6 +232,10 @@ ts_with_future <- rbind.fill(ts, future_agg)
 save.image(paste0(proj_root, '/checkpoint.RData'))
 
 
+#####
+# EXPLORE VARIABLE IMPORTANCE
+#####
+varImpPlot(fit)
 
 # #####
 # # BOOTSTRAP LINEAR REGRESSION
