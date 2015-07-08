@@ -1,10 +1,18 @@
 library(plyr)
-library(xts)
+#library(xts)
 library(dplyr)
 #library(mgcv)
 
 # Read in most recent data
 source('read_in.R')
+
+# How many days ahead do I want to be able to forecast
+forecast_ahead <- 10
+today <- Sys.Date()
+minimum <- abs(as.numeric(recent - today)) + forecast_ahead
+
+# What about how far back to go with weather stuff?
+minimum_weather <- 1
 
 #####
 # TRAP-SPECIFIC PREDICTIONS
@@ -33,15 +41,15 @@ df <- left_join(x = df,
 recent <- max(df$date[which(!is.na(df$n))])
 df <- df[which(df$date > recent | !is.na(df$n)),]
 
-# Get weather for period 10-21 days prior
+# Get weather for period days prior
 vars <- c('Mean_TemperatureF',
           'Min_TemperatureF',
           'Max_TemperatureF',
           'PrecipitationIn',
           'Mean_Wind_SpeedMPH')
 
-lows <- 10:30
-highs <- 15:45
+lows <- (minimum_weather):(minimum_weather+20)
+highs <- (minimum_weather+5):(minimum_weather+40)
 
 for (var in vars){
   print(paste0('Working on ', var, '\n'))
@@ -66,7 +74,7 @@ for (var in vars){
 }
 
 # Make a previous mosquitoes per trap for previous traps
-vec <- 10:30
+vec <- minimum:45
 
 for (i in 1:nrow(df)){
   cat(paste0('row ', i, ' of ', nrow(df), '\n'))
@@ -77,7 +85,7 @@ for (i in 1:nrow(df)){
     val <-  mean(df$n[which(df$date >= (date - vec[j]) &
                               df$date < date &
                               df$trap == trap)], na.rm = TRUE) # getting 0s for impossible rows
-    if(val == 0 | is.na(val)){ val <- NA}
+    if(val == 0 | is.na(val)){ val <- sample(df$n, 1)}
     
     df[i,paste0('n_minus_', as.character(vec[j]))] <- 
       val 
@@ -123,6 +131,8 @@ vars <- names(df)[which(!names(df) %in% c('date', 'year', 'n'))]
 x <- paste(vars, collapse = ' + ')
 
 model_formula <- as.formula(paste0(y, ' ~ ', x))
+
+
 
 system.time(
   fit <- randomForest(model_formula,
