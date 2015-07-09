@@ -7,26 +7,27 @@ library(dplyr)
 source('read_in.R')
 
 # How many days ahead do I want to be able to forecast
-forecast_ahead <- 10
+forecast_ahead <- 14
 today <- Sys.Date()
+recent <- max(ts$date)
 minimum <- abs(as.numeric(recent - today)) + forecast_ahead
 
 # What about how far back to go with weather stuff?
-minimum_weather <- 1
+minimum_weather <- forecast_ahead
 
 #####
 # TRAP-SPECIFIC PREDICTIONS
 #####
-train <- raw_data
+by_trap <- raw_data
 # Ignore by mosquito type, grouping by trap-date
-train <- train %>%
+by_trap <- by_trap %>%
   group_by(date, trap) %>%
   summarise(n = sum(n))
 
 # Make a comprehensive dataframe with both past and future
 df <- 
   expand.grid(
-    date = seq(min(train$date), Sys.Date()+9, by = 1),
+    date = seq(min(raw_data$date), Sys.Date()+30, by = 1),
     trap = 1:10)
 
 # Generate some more features
@@ -35,10 +36,9 @@ df$day_number <- as.numeric(format(df$date, '%j'))
 
 # Get trap data
 df <- left_join(x = df, 
-                y = train)
+                y = by_trap)
 
 # Eliminate historical rows with no observation
-recent <- max(df$date[which(!is.na(df$n))])
 df <- df[which(df$date > recent | !is.na(df$n)),]
 
 # Get weather for period days prior
@@ -85,7 +85,8 @@ for (i in 1:nrow(df)){
     val <-  mean(df$n[which(df$date >= (date - vec[j]) &
                               df$date < date &
                               df$trap == trap)], na.rm = TRUE) # getting 0s for impossible rows
-    if(val == 0 | is.na(val)){ val <- sample(df$n, 1)}
+    if(val == 0 | is.na(val)){ val <- 
+      mean(sample(df$n[which(!is.na(df$n) & df$trap == trap)], 30, replace = TRUE), na.rm = TRUE)}
     
     df[i,paste0('n_minus_', as.character(vec[j]))] <- 
       val 
@@ -218,7 +219,7 @@ for (i in 1:nrow(future_agg)){
     my_row <- sub_predictions[j,]
     sub_predictions[j,] <- sample(my_row, length(my_row), replace = FALSE)
   }
-  vals <- apply(sub_predictions, 2, median)
+  vals <- apply(sub_predictions, 2, function(x){sum(x, na.rm = TRUE)})
   temp <- data.frame(predicted = mean(vals, na.rm = TRUE),
                      lower = quantile(vals, 0.1, na.rm = TRUE),
                      upper = quantile(vals, 0.9, na.rm = TRUE))

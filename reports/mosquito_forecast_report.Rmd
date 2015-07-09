@@ -12,52 +12,311 @@ graphics: yes
 
 ---
 
+
+```{r, echo = FALSE}
+library(knitr)
+opts_chunk$set(comment=NA, warning = FALSE, message=FALSE, echo = FALSE)
+```
+
+
+```{r}
+# Ordinal function:
+ordinal <- function(number){
+  number <- as.numeric(number)
+  suffix <- if (number %% 100 %~% paste(11:13, collapse = "|")) {
+    'th'
+  } else {
+    switch(number %% 10 + 1, 'th', 'st', 'nd', 'rd', 'th')             
+  }
+  sprintf("%d%s", number, suffix)
+}
+
+`%~%` <- function (x, rx){
+    base:::regexpr(rx, x) > 0 
+}
+```
+
+```{r, include = FALSE}
+# wd <- '/home/joebrew/Documents/mosquito15/'
+# setwd(wd)
+library(plyr)
+library(dplyr)
+library(png)
+library(grid)
+library(ggplot2)
+library(rgdal)
+library(ggmap)
+library(tidyr)
+library(randomForest)
+library(RColorBrewer)
+load('../checkpoint.RData')
+
+# create a blank ggplot theme
+theme_opts <- list(theme(panel.grid.minor = element_blank(),
+                        panel.grid.major = element_blank(),
+                        panel.background = element_blank(),
+                        plot.background = element_rect(fill="white"),
+                        panel.border = element_blank(),
+                        axis.line = element_blank(),
+                        axis.text.x = element_blank(),
+                        axis.text.y = element_blank(),
+                        axis.ticks = element_blank(),
+                        axis.title.x = element_blank(),
+                        axis.title.y = element_blank(),
+                        plot.title = element_text(size=22)))
+
+# Read in Alachua boundary
+boundary <- readOGR('../geo_data/alachua_boundary/', 'Alachua_Boundary')
+
+# Trap locations
+trap_locations <- read.csv('../geo_data/traplatlong.csv')
+
+
+```
+
+```{r, fig = TRUE, echo=FALSE, fig.align = 'center', warning = FALSE, message = FALSE}
+# Get most recent trapping numbers
+left <- trap_locations
+right <- df[which(df$date == recent),c('date', 'trap', 'n')]
+right$trap <- as.numeric(as.character(right$trap))
+temp <- left_join(x = left, y = right)
+temp$mosquitos <- temp$n
+
+ggplot(boundary, aes(long, lat)) +
+  geom_polygon(color = 'darkgrey', fill = 'grey', alpha = 0.3) + 
+  coord_equal() +
+  theme_opts +
+  geom_point(data = temp, aes(x = long, y = lat, size = mosquitos), pch = 16,
+             alpha = 0.5, color = 'black') +
+  scale_size(range = c(2,20)) +
+  theme(legend.position="none") 
+# plot(boundary)
+```
+
 \begin{center}
 Joe Brew \\
 Ben Brew \\
 Yoni Teitelbaum
 \end{center}
 
-```{r, echo = FALSE}
-library(knitr)
-opts_chunk$set(comment=NA, warning = FALSE, message = FALSE, echo = FALSE)
-```
-
-```{r}
-# wd <- '/home/joebrew/Documents/mosquito15/'
-# setwd(wd)
-library(png)
-library(grid)
-library(ggplot2)
-load('../checkpoint.RData')
-```
-
 ```{r, fig = TRUE, fig.height = 0.5, echo=FALSE, fig.align = 'center'}
 img <- readPNG('../images/logo.png')
 grid.raster(img)
 ```
 
+\newpage
+
 # Overview
 
-This is a main header with important stuff under it.
+```{r}
+# Get percentile
+percentiles <- quantile(ts$n / ts$n_traps, probs = seq(0, 1, 0.01))
+difs <- abs((ts$n / ts$n_traps)[nrow(ts)] - percentiles)
+num <- as.numeric(gsub('%', '', names(which.min(difs))))
+
+```
+
+The most recent trap collection was on `r format(recent, '%B %d, %Y')`. The `r ts$n[which(ts$date == recent)]` mosquitos trapped (approximately `r round(ts$n[which(ts$date == recent)] / ts$n_traps[which(ts$date == recent)])` per trap) is at the `r num` percentile of all historical trappings.
+
+```{r, fig.height = 3, fig.width = 5, fig.align = 'center'}
+temp <- ts
+temp$p <- temp$n / temp$n_traps
+val <- temp$p[nrow(temp)]
+g <- ggplot(data = temp, aes(p))
+g + 
+  geom_density(fill = 'blue', alpha = 0.5) +
+  scale_x_log10() +
+  xlab('Mosquitos per trap (weekly) (log scale)') +
+  theme_bw() +
+  geom_vline(xintercept = val, lwd = 2, alpha = 0.5)
+```
+
+Though numbers have declined over the last few weeks, recent weather conditions suggest a rise in the mosquito population through the middle of July.
 
 ```{r}
-g <- ggplot(data = future_agg) + 
-  aes(x = date, y = predicted) +
+past_temp <- ts[which(ts$date > (Sys.Date() - 60)),]
+future_temp <- future_agg
+
+future_temp <- rbind.fill(past_temp[nrow(past_temp),], future_temp)
+
+future_temp <- future_temp[which(future_temp$n > 0),]
+
+g <- ggplot(data = future_temp) + 
+  aes(x = date, y = n) +
   theme_bw() +
 #   geom_line(aes(x = date, y = lower ), color = 'red') +
 #   geom_line(aes(x = date, y = upper ), color = 'red') +
-  geom_ribbon(aes(x = date, y = upper, ymin = lower, ymax = upper), alpha = 0.5) +
-  geom_line(color = 'darkred', lwd = 3) + 
+  geom_ribbon(aes(x = date, y = upper, ymin = lower, ymax = upper), alpha = 0.1, fill = 'darkred') +
+  geom_line(color = 'darkred', lwd = 1, lty = 2, alpha = 0.5) + 
   xlab('Date') + 
-  ylab('Mosquitos')
+  ylab('Mosquitos') +
+  geom_line(data = past_temp, aes(date, n), 
+            color = 'darkred', lwd = 2) +
+  annotate('text', 
+           x= c(min(past_temp$date) + 5, max(future_temp$date) -5), 
+           y = max(past_temp$n)*1.2, 
+           label =  c('Observed', 'Predicted'), 
+           size = 5,
+           alpha = 0.5)
 g 
 ```
 
-# Most recent collection details
+# Historical perspective
 
-This is a sub-header.
+Numbers so far this summer have been relatively low.  However, it's worth noting that peak mosquito population is usually reached later in the summer.
 
-# Forecast details
+```{r, fig.height = 6}
+temp <- ts
+temp$p <- temp$n / temp$n_traps
+temp$day <- as.numeric(format(temp$date, '%j'))
+temp$year <- as.numeric(format(temp$date, '%Y'))
+temp <- temp[,c('year', 'day', 'p')]
 
-I don't even know if this will render.
+g <- ggplot(data = temp, aes(x = day, y = p))
+g + geom_point() +
+  geom_line() +
+  theme_bw() + 
+  facet_grid(year ~. ) +
+  xlab('Day number') +
+  ylab('Mosquitos per trap')
+```
+
+
+\newpage 
+
+# Disease details  
+
+Vectors of diseases of concern appear relatively evenly distributed throughout the county.
+
+```{r, fig.height = 8, fig.width = 8}
+# Get disease types
+temp <- left_join(x = raw_data, y = diseases)
+
+# # Get only recent trapping
+# temp <- temp[which(temp$date == recent),]
+
+# Get last six trapping
+
+trappings <- unique(sort(temp$date))
+trappings <- trappings[(length(trappings) - 5):length(trappings)]
+temp <- temp[which(temp$date %in% trappings),]
+
+# # Get by date, trap and disease
+temp_grouped <- temp %>%
+  group_by(date, trap) %>%
+  summarise(wnv = sum(n[wnv], na.rm = TRUE),
+            slev = sum(n[slev], na.rm = TRUE),
+            eeev = sum(n[eeev], na.rm = TRUE),
+            chik = sum(n[chik], na.rm = TRUE),
+            malaria = sum(n[malaria], na.rm = TRUE),
+            dengue = sum(n[dengue], na.rm = TRUE),
+            yellow = sum(n[yellow], na.rm = TRUE))
+
+#Gather from wide to long
+temp_long <- gather(data = temp_grouped, 
+                    key = disease,
+                    value = n,
+                    wnv:yellow)
+
+# Join to trap_locations
+temp_long <- left_join(x = temp_long, 
+                  y = trap_locations[,which(!names(trap_locations) %in% c('name'))], 
+                  by = 'trap')
+
+cols <- brewer.pal(7, 'Dark2')
+
+g <- ggplot(boundary, aes(long, lat)) +
+  geom_polygon(color = 'darkgrey', fill = 'grey', alpha = 0.3) + 
+  coord_equal() +
+  theme_opts +
+  geom_point(data = temp_long, aes(x = long, y = lat, size = n, color = disease), pch = 16,
+             alpha = 0.8) +
+  scale_size(range = c(2,10)) +
+  theme(legend.position="none") +
+  facet_grid(disease ~ date, scales = 'fixed') +
+  scale_colour_manual(values = cols)
+g
+```
+
+\newpage
+
+# Forecast 
+
+Over the next two weeks, we predict the mosquito population to grow slightly, with the greatest growth ocurring in the south of the county (towards Micanopy).
+
+```{r, fig.width = 8, fig.height = 1.5}
+# left <- trap_locations
+# right <- future[which(future$date > recent), c('date', 'trap', 'predicted')]
+# right$trap <- as.numeric(as.character(right$trap))
+# temp <- left_join(x = left, y = right)
+# temp$mosquitos <- temp$predicted
+# temp <- temp[which(temp$date <= '2015-07-20'),]
+# 
+# map <- get_map(location = c(lon = mean(temp$long), 
+#                             lat = mean(temp$lat)),
+#                source = 'stamen',
+#                maptype = 'toner',
+#                crop = FALSE,
+#                color = 'bw',
+#                zoom = 11)
+# ggmap(map) +
+#   geom_point(data = temp, aes(x = long, y = lat, size = mosquitos), pch = 16,
+#              color = 'red', alpha = 0.5) +
+#   #scale_size_area(range = c(2,20)) +
+#   ggtitle('Predicted') +
+#   facet_grid(~ date, scales = 'fixed') 
+```
+
+
+```{r, fig.align = 'center', fig.width = 6, fig.height = 6}
+left <- trap_locations
+right <- future[which(future$date > recent), c('date', 'trap', 'predicted')]
+right$trap <- as.numeric(as.character(right$trap))
+temp <- left_join(x = left, y = right)
+temp$mosquitos <- temp$predicted
+temp <- temp[which(temp$date <= '2015-07-20'),]
+temp <- temp %>%
+  group_by(trap, lat, long, name) %>%
+  summarise(predicted = mean(predicted, na.rm = TRUE))
+
+map <- get_map(location = c(lon = mean(temp$long), 
+                            lat = mean(temp$lat)),
+               source = 'google',
+               maptype = 'terrain',
+               crop = FALSE,
+               color = 'bw',
+               zoom = 10)
+ggmap(map) +
+  geom_point(data = temp, aes(x = long, y = lat, size = predicted), pch = 16,
+             color = 'red', alpha = 0.5) +
+  #scale_size_area(range = c(2,20)) +
+  ggtitle('Predicted') +
+  xlab('Longitude') + 
+  ylab('Latitude')
+```
+
+
+\newpage
+
+# Model details
+
+The forecast model has undergone several improvements since last year.  The inputs have been substantially expanded (now taking into account humidity, precipitation, wind speed, temperature and its fluctuations), and the model has been improved (in lieu of linear regression, the predictive model now employs ensemble machine learning methods).  
+
+The model is cross-validated and backtesting confirms a decent fit.
+
+```{r}
+temp <- df
+temp <- temp[complete.cases(temp),]
+temp$predicted <- predict(fit)
+temp <- temp[,c('date','predicted', 'n', 'trap')]
+temp <- temp %>%
+  group_by(date) %>%
+  summarise(predicted = sum(predicted, na.rm = TRUE),
+            n = sum(n, na.rm = TRUE))
+
+g <- ggplot(data = temp, aes(x = predicted, y = n))
+g + geom_point(color = 'blue', alpha = 0.5) +
+  labs(x = 'Mosquitos predicted', y = 'Actual mosquitos', title = 'Model performance') +
+  theme_bw() +
+  geom_smooth()
+```
