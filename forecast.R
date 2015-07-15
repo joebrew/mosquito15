@@ -133,6 +133,7 @@ x <- paste(vars, collapse = ' + ')
 
 model_formula <- as.formula(paste0(y, ' ~ ', x))
 
+save.image('~/Desktop/checkpoint.RData')
 
 
 system.time(
@@ -142,7 +143,8 @@ system.time(
                       ntree = 1000,
                       predict.all = TRUE)
 ) 
-# 1351 / 60 
+# 40 minutes
+save.image('~/Desktop/checkpoint.RData')
 
 # #### LENDABLE STYLE CIS
 # #####

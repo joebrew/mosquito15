@@ -9,8 +9,12 @@ output:
     theme: united
     toc: yes
 graphics: yes
-
+header-includes:
+     - \usepackage{graphicx}
+     - \usepackage{grffile}
 ---
+
+
 
 
 ```{r, echo = FALSE}
@@ -80,13 +84,13 @@ left <- trap_locations
 right <- df[which(df$date == recent),c('date', 'trap', 'n')]
 right$trap <- as.numeric(as.character(right$trap))
 temp <- left_join(x = left, y = right)
-temp$mosquitos <- temp$n
+temp$mosquitoes <- temp$n
 
 ggplot(boundary, aes(long, lat)) +
   geom_polygon(color = 'darkgrey', fill = 'grey', alpha = 0.3) + 
   coord_equal() +
   theme_opts +
-  geom_point(data = temp, aes(x = long, y = lat, size = mosquitos), pch = 16,
+  geom_point(data = temp, aes(x = long, y = lat, size = mosquitoes), pch = 16,
              alpha = 0.5, color = 'black') +
   scale_size(range = c(2,20)) +
   theme(legend.position="none") 
@@ -116,7 +120,7 @@ num <- as.numeric(gsub('%', '', names(which.min(difs))))
 
 ```
 
-The most recent trap collection was on `r format(recent, '%B %d, %Y')`. The `r ts$n[which(ts$date == recent)]` mosquitos trapped (approximately `r round(ts$n[which(ts$date == recent)] / ts$n_traps[which(ts$date == recent)])` per trap) is at the `r num` percentile of all historical trappings.
+The most recent trap collection was on `r format(recent, '%B %d, %Y')`. The `r ts$n[which(ts$date == recent)]` mosquitoes trapped (approximately `r round(ts$n[which(ts$date == recent)] / ts$n_traps[which(ts$date == recent)])` per trap) is at the `r num` percentile of all historical trappings.
 
 ```{r, fig.height = 3, fig.width = 5, fig.align = 'center'}
 temp <- ts
@@ -126,12 +130,12 @@ g <- ggplot(data = temp, aes(p))
 g + 
   geom_density(fill = 'blue', alpha = 0.5) +
   scale_x_log10() +
-  xlab('Mosquitos per trap (weekly) (log scale)') +
+  xlab('Mosquitoes per trap (weekly) (log scale)') +
   theme_bw() +
   geom_vline(xintercept = val, lwd = 2, alpha = 0.5)
 ```
 
-Though numbers have declined over the last few weeks, recent weather conditions suggest a rise in the mosquito population through the middle of July.
+As predicted, the number of mosquitoes has begun to recent.  Recent weather conditions suggest a continued rise in the mosquito population through the rest of the month.
 
 ```{r}
 past_temp <- ts[which(ts$date > (Sys.Date() - 60)),]
@@ -149,7 +153,7 @@ g <- ggplot(data = future_temp) +
   geom_ribbon(aes(x = date, y = upper, ymin = lower, ymax = upper), alpha = 0.1, fill = 'darkred') +
   geom_line(color = 'darkred', lwd = 1, lty = 2, alpha = 0.5) + 
   xlab('Date') + 
-  ylab('Mosquitos') +
+  ylab('Mosquitoes') +
   geom_line(data = past_temp, aes(date, n), 
             color = 'darkred', lwd = 2) +
   annotate('text', 
@@ -178,7 +182,7 @@ g + geom_point() +
   theme_bw() + 
   facet_grid(year ~. ) +
   xlab('Day number') +
-  ylab('Mosquitos per trap')
+  ylab('Mosquitoes per trap')
 ```
 
 
@@ -249,7 +253,7 @@ Over the next two weeks, we predict the mosquito population to grow slightly, wi
 # right <- future[which(future$date > recent), c('date', 'trap', 'predicted')]
 # right$trap <- as.numeric(as.character(right$trap))
 # temp <- left_join(x = left, y = right)
-# temp$mosquitos <- temp$predicted
+# temp$mosquitoes <- temp$predicted
 # temp <- temp[which(temp$date <= '2015-07-20'),]
 # 
 # map <- get_map(location = c(lon = mean(temp$long), 
@@ -260,7 +264,7 @@ Over the next two weeks, we predict the mosquito population to grow slightly, wi
 #                color = 'bw',
 #                zoom = 11)
 # ggmap(map) +
-#   geom_point(data = temp, aes(x = long, y = lat, size = mosquitos), pch = 16,
+#   geom_point(data = temp, aes(x = long, y = lat, size = mosquitoes), pch = 16,
 #              color = 'red', alpha = 0.5) +
 #   #scale_size_area(range = c(2,20)) +
 #   ggtitle('Predicted') +
@@ -273,7 +277,7 @@ left <- trap_locations
 right <- future[which(future$date > recent), c('date', 'trap', 'predicted')]
 right$trap <- as.numeric(as.character(right$trap))
 temp <- left_join(x = left, y = right)
-temp$mosquitos <- temp$predicted
+temp$mosquitoes <- temp$predicted
 temp <- temp[which(temp$date <= '2015-07-20'),]
 temp <- temp %>%
   group_by(trap, lat, long, name) %>%
@@ -293,6 +297,42 @@ ggmap(map) +
   ggtitle('Predicted') +
   xlab('Longitude') + 
   ylab('Latitude')
+```
+
+\newpage
+
+# Special section: EEEV
+
+In early July, a local horse was confirmed to have been infected with EEEV in the south of the county.  
+
+
+```{r, fig.align = 'center', fig.width = 3.5, fig.height = 3.5}
+
+horse <- data.frame(long = -82.32, lat = 29.53)
+g <- ggplot(boundary, aes(long, lat)) +
+  geom_polygon(color = 'darkgrey', fill = 'grey', alpha = 0.3) + 
+  coord_equal() +
+  theme_opts +
+  geom_point(data = horse, aes(x = long, y = lat), pch = 3, size = 10,
+             alpha = 0.8, color = 'red') +
+  ggtitle('Recent animal EEEV case') +
+  theme(plot.title = element_text(size = rel(0.7)))
+g
+```
+
+Though the number of mosquitoes in that area is high, the number capable of carrying EEEV remains low.
+
+```{r, fig.align = 'center', fig.height = 4}
+temp <- raw_data
+temp <- left_join(temp, diseases)
+eeev <- temp[which(temp$eeev),]
+
+g <- ggplot(data = eeev, aes(x = date, y = n / n_traps))
+g + geom_smooth() + 
+  xlab('Date') + 
+  ylab('EEEV capable mosquitoes per trap') +
+  ggtitle('EEEV') +
+  theme_bw()
 ```
 
 
@@ -316,7 +356,7 @@ temp <- temp %>%
 
 g <- ggplot(data = temp, aes(x = predicted, y = n))
 g + geom_point(color = 'blue', alpha = 0.5) +
-  labs(x = 'Mosquitos predicted', y = 'Actual mosquitos', title = 'Model performance') +
+  labs(x = 'Mosquitoes predicted', y = 'Actual mosquitoes', title = 'Model performance') +
   theme_bw() +
   geom_smooth()
 ```
