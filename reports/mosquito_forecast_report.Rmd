@@ -135,7 +135,7 @@ g +
   geom_vline(xintercept = val, lwd = 2, alpha = 0.5)
 ```
 
-As predicted, the number of mosquitoes has begun to recent.  Recent weather conditions suggest a continued rise in the mosquito population through the rest of the month.
+As predicted, the number of mosquitoes has begun to rise.  Recent weather conditions suggest a continued rise in the mosquito population through the rest of the month and through early August.
 
 ```{r}
 past_temp <- ts[which(ts$date > (Sys.Date() - 60)),]
@@ -246,7 +246,7 @@ g
 
 # Forecast 
 
-Over the next two weeks, we predict the mosquito population to grow slightly, with the greatest growth ocurring in the south of the county (towards Micanopy).
+Over the next two weeks, we predict the mosquito population to grow slightly, with the greatest growth ocurring in the south of the county (towards Micanopy) and east (Hawthrone area).
 
 ```{r, fig.width = 8, fig.height = 1.5}
 # left <- trap_locations
@@ -298,43 +298,6 @@ ggmap(map) +
   xlab('Longitude') + 
   ylab('Latitude')
 ```
-
-\newpage
-
-# Special section: EEEV
-
-In early July, a local horse was confirmed to have been infected with EEEV in the south of the county.  
-
-
-```{r, fig.align = 'center', fig.width = 3.5, fig.height = 3.5}
-
-horse <- data.frame(long = -82.32, lat = 29.53)
-g <- ggplot(boundary, aes(long, lat)) +
-  geom_polygon(color = 'darkgrey', fill = 'grey', alpha = 0.3) + 
-  coord_equal() +
-  theme_opts +
-  geom_point(data = horse, aes(x = long, y = lat), pch = 3, size = 10,
-             alpha = 0.8, color = 'red') +
-  ggtitle('Recent animal EEEV case') +
-  theme(plot.title = element_text(size = rel(0.7)))
-g
-```
-
-Though the number of mosquitoes in that area is high, the number capable of carrying EEEV remains low.
-
-```{r, fig.align = 'center', fig.height = 4}
-temp <- raw_data
-temp <- left_join(temp, diseases)
-eeev <- temp[which(temp$eeev),]
-
-g <- ggplot(data = eeev, aes(x = date, y = n / n_traps))
-g + geom_smooth() + 
-  xlab('Date') + 
-  ylab('EEEV capable mosquitoes per trap') +
-  ggtitle('EEEV') +
-  theme_bw()
-```
-
 
 \newpage
 
