@@ -135,7 +135,7 @@ g +
   geom_vline(xintercept = val, lwd = 2, alpha = 0.5)
 ```
 
-As predicted, the number of mosquitoes has begun to rise.  Recent weather conditions suggest a continued rise in the mosquito population through the rest of the month and through early August.
+As predicted, the number of mosquitoes has begun to rise.  Recent weather conditions suggest a continued rise in the mosquito population through mid-August.
 
 ```{r}
 past_temp <- ts[which(ts$date > (Sys.Date() - 60)),]
@@ -278,7 +278,7 @@ right <- future[which(future$date > recent), c('date', 'trap', 'predicted')]
 right$trap <- as.numeric(as.character(right$trap))
 temp <- left_join(x = left, y = right)
 temp$mosquitoes <- temp$predicted
-temp <- temp[which(temp$date <= '2015-07-20'),]
+temp <- temp[which(temp$date <= '2015-08-20'),]
 temp <- temp %>%
   group_by(trap, lat, long, name) %>%
   summarise(predicted = mean(predicted, na.rm = TRUE))
