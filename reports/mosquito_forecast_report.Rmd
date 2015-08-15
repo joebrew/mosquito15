@@ -135,7 +135,7 @@ g +
   geom_vline(xintercept = val, lwd = 2, alpha = 0.5)
 ```
 
-The number of mosquitoes rose in July, albeit slightly more gradually than predicted.  Recent precipitation suggests a continued rise in the mosquito population through mid-August, with a sharper rise through the end of the month.
+As predicted, the number of weekly trapped mosquitoes has begun to rise.  Recent precipitation suggests a continued rise in the mosquito population through the end of the month.
 
 ```{r}
 past_temp <- ts[which(ts$date > (Sys.Date() - 60)),]
