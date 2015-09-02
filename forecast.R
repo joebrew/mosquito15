@@ -140,7 +140,7 @@ system.time(
   fit <- randomForest(model_formula,
                       data = train,
                       na.action = na.omit,
-                      ntree = 1000,
+                      ntree = 500,
                       predict.all = TRUE)
 ) 
 # 40 minutes

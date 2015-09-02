@@ -135,7 +135,7 @@ g +
   geom_vline(xintercept = val, lwd = 2, alpha = 0.5)
 ```
 
-As predicted, the number of weekly trapped mosquitoes has begun to rise.  Recent precipitation suggests a continued rise in the mosquito population through the end of the month.
+As predicted, the number of weekly trapped mosquitoes has begun to rise.  Recent precipitation suggests a continued rise in the mosquito population, with the potential for a sharp uptick mid-month.
 
 ```{r}
 past_temp <- ts[which(ts$date > (Sys.Date() - 60)),]
@@ -167,7 +167,7 @@ g
 
 # Historical perspective
 
-Numbers so far this summer have been relatively low.  However, it's worth noting that peak mosquito population is usually reached later in the summer.
+Numbers so far this summer have been relatively low.  
 
 ```{r, fig.height = 6}
 temp <- ts
@@ -246,39 +246,39 @@ g
 
 # Forecast 
 
-Over the next two weeks, we predict the mosquito population to grow slightly, with the greatest growth ocurring in the south of the county (towards Micanopy) and east (Hawthrone area).
+Over the next two weeks, we predict the mosquito population to grow slightly, with the greatest growth ocurring in the north and east of the county.
 
-```{r, fig.width = 8, fig.height = 1.5}
-# left <- trap_locations
-# right <- future[which(future$date > recent), c('date', 'trap', 'predicted')]
-# right$trap <- as.numeric(as.character(right$trap))
-# temp <- left_join(x = left, y = right)
-# temp$mosquitoes <- temp$predicted
-# temp <- temp[which(temp$date <= '2015-07-20'),]
-# 
-# map <- get_map(location = c(lon = mean(temp$long), 
-#                             lat = mean(temp$lat)),
-#                source = 'stamen',
-#                maptype = 'toner',
-#                crop = FALSE,
-#                color = 'bw',
-#                zoom = 11)
-# ggmap(map) +
-#   geom_point(data = temp, aes(x = long, y = lat, size = mosquitoes), pch = 16,
-#              color = 'red', alpha = 0.5) +
-#   #scale_size_area(range = c(2,20)) +
-#   ggtitle('Predicted') +
-#   facet_grid(~ date, scales = 'fixed') 
-```
-
-
-```{r, fig.align = 'center', fig.width = 6, fig.height = 6}
+```{r, fig.width = 8, fig.height = 4}
 left <- trap_locations
 right <- future[which(future$date > recent), c('date', 'trap', 'predicted')]
 right$trap <- as.numeric(as.character(right$trap))
 temp <- left_join(x = left, y = right)
 temp$mosquitoes <- temp$predicted
-temp <- temp[which(temp$date <= '2015-08-20'),]
+temp <- temp[which(temp$date %in% as.Date(c('2015-09-07', '2015-09-12', '2015-09-19'))),] ##############!!!!!!!!!!!!!!!!!!
+
+map <- get_map(location = c(lon = mean(temp$long), 
+                            lat = mean(temp$lat)),
+               source = 'stamen',
+               maptype = 'toner',
+               crop = FALSE,
+               color = 'bw',
+               zoom = 11)
+ggmap(map) +
+  geom_point(data = temp, aes(x = long, y = lat, size = mosquitoes), pch = 16,
+             color = 'red', alpha = 0.5) +
+  #scale_size_area(range = c(2,20)) +
+  ggtitle('Predicted') +
+  facet_grid(~ date, scales = 'fixed') 
+```
+
+
+```{r, fig.align = 'center', fig.width = 6, fig.height = 4, eval = TRUE}
+left <- trap_locations
+right <- future[which(future$date > recent), c('date', 'trap', 'predicted')]
+right$trap <- as.numeric(as.character(right$trap))
+temp <- left_join(x = left, y = right)
+temp$mosquitoes <- temp$predicted
+temp <- temp[which(temp$date >= recent),]
 temp <- temp %>%
   group_by(trap, lat, long, name) %>%
   summarise(predicted = mean(predicted, na.rm = TRUE))
