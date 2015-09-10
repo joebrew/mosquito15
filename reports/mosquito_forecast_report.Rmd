@@ -135,7 +135,7 @@ g +
   geom_vline(xintercept = val, lwd = 2, alpha = 0.5)
 ```
 
-As predicted, the number of weekly trapped mosquitoes has begun to rise.  Recent precipitation suggests a continued rise in the mosquito population, with the potential for a sharp uptick mid-month.
+The number of mosquitoes declined slightly in the most recent trapping, perhaps due to heavier than usual recent precipitation. The predictive model suggests a slight rise going forward in September.
 
 ```{r}
 past_temp <- ts[which(ts$date > (Sys.Date() - 60)),]
@@ -167,7 +167,7 @@ g
 
 # Historical perspective
 
-Numbers so far this summer have been relatively low.  
+Numbers so far this summer have been relatively low compared to previous summers.  
 
 ```{r, fig.height = 6}
 temp <- ts
@@ -190,7 +190,7 @@ g + geom_point() +
 
 # Disease details  
 
-Vectors of diseases of concern appear relatively evenly distributed throughout the county.
+Vectors of diseases of concern appear relatively evenly distributed throughout the county. In recent weeks, the number of mosquitoes capable of carrying SLEV has increased slightly.
 
 ```{r, fig.height = 8, fig.width = 8}
 # Get disease types
@@ -246,7 +246,7 @@ g
 
 # Forecast 
 
-Over the next two weeks, we predict the mosquito population to grow slightly, with the greatest growth ocurring in the north and east of the county.
+Over the next two weeks, we predict the mosquito population to grow slightly, with the greatest growth ocurring in the east of the county.
 
 ```{r, fig.width = 8, fig.height = 4}
 left <- trap_locations
