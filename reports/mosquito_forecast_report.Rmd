@@ -135,7 +135,7 @@ g +
   geom_vline(xintercept = val, lwd = 2, alpha = 0.5)
 ```
 
-The number of mosquitoes declined slightly in the most recent trapping, perhaps due to heavier than usual recent precipitation. The predictive model suggests a slight rise going forward in September.
+As predicted, the number of mosquitoes rose through mid-September. Our model suggests that numbers will remain elevated through the end of the month and into the first few days of October, but will thereafter gradually decline.   
 
 ```{r}
 past_temp <- ts[which(ts$date > (Sys.Date() - 60)),]
@@ -190,7 +190,7 @@ g + geom_point() +
 
 # Disease details  
 
-Vectors of diseases of concern appear relatively evenly distributed throughout the county. In recent weeks, the number of mosquitoes capable of carrying SLEV has increased slightly.
+Vectors of diseases of concern appear relatively evenly distributed throughout the county. In recent weeks, the number of mosquitoes capable of carrying SLEV has increased substantially.
 
 ```{r, fig.height = 8, fig.width = 8}
 # Get disease types
@@ -246,7 +246,7 @@ g
 
 # Forecast 
 
-Over the next two weeks, we predict the mosquito population to grow slightly, with the greatest growth ocurring in the east of the county.
+Over the next two weeks, we predict the mosquito population to grow slightly, with the greatest growth ocurring in the east and south of the county.
 
 ```{r, fig.width = 8, fig.height = 4}
 left <- trap_locations
@@ -254,7 +254,7 @@ right <- future[which(future$date > recent), c('date', 'trap', 'predicted')]
 right$trap <- as.numeric(as.character(right$trap))
 temp <- left_join(x = left, y = right)
 temp$mosquitoes <- temp$predicted
-temp <- temp[which(temp$date %in% as.Date(c('2015-09-07', '2015-09-12', '2015-09-19'))),] ##############!!!!!!!!!!!!!!!!!!
+temp <- temp[which(temp$date %in% as.Date(c('2015-10-01', '2015-10-04', '2015-10-07'))),] ##############!!!!!!!!!!!!!!!!!!
 
 map <- get_map(location = c(lon = mean(temp$long), 
                             lat = mean(temp$lat)),

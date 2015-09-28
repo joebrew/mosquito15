@@ -1,3 +1,5 @@
+#### FOR SOME REASON, THIS HAS TO BE RUN TWICE.  NEED TO DEBUG.
+
 library(plyr)
 library(dplyr)
 library(tidyr)
