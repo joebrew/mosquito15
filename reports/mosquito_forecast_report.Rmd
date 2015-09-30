@@ -135,6 +135,7 @@ g +
   geom_vline(xintercept = val, lwd = 2, alpha = 0.5)
 ```
 
+Our model had predicted that the number of mosquitoes would remain elevated - but not grow - from the middle to end of September.  In reality, the number of mosquitoes _did_ continue grow, peaking on September 24th at the highest levels so far this year.  Recent weather conditions suggest a decline
 As predicted, the number of mosquitoes rose through mid-September. Our model suggests that numbers will remain elevated through the end of the month and into the first few days of October, but will thereafter gradually decline.   
 
 ```{r}
@@ -167,7 +168,7 @@ g
 
 # Historical perspective
 
-Numbers so far this summer have been relatively low compared to previous summers.  
+Numbers so far this summer have been relatively low compared to previous summers. The recent spike is similar in magnitude to the 2014 spikes.   
 
 ```{r, fig.height = 6}
 temp <- ts
@@ -190,7 +191,7 @@ g + geom_point() +
 
 # Disease details  
 
-Vectors of diseases of concern appear relatively evenly distributed throughout the county. In recent weeks, the number of mosquitoes capable of carrying SLEV has increased substantially.
+Vectors of diseases of concern appear relatively evenly distributed throughout the county. In recent weeks, the number of mosquitoes capable of carrying SLEV has increased substantially and remains elevated, particularly in Hawthorne. 
 
 ```{r, fig.height = 8, fig.width = 8}
 # Get disease types
@@ -254,7 +255,7 @@ right <- future[which(future$date > recent), c('date', 'trap', 'predicted')]
 right$trap <- as.numeric(as.character(right$trap))
 temp <- left_join(x = left, y = right)
 temp$mosquitoes <- temp$predicted
-temp <- temp[which(temp$date %in% as.Date(c('2015-10-01', '2015-10-04', '2015-10-07'))),] ##############!!!!!!!!!!!!!!!!!!
+temp <- temp[which(temp$date %in% as.Date(c('2015-10-03', '2015-10-07', '2015-10-11'))),] ##############!!!!!!!!!!!!!!!!!!
 
 map <- get_map(location = c(lon = mean(temp$long), 
                             lat = mean(temp$lat)),

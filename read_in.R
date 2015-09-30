@@ -233,7 +233,7 @@ legend('bottom',
        cex = 0.7)
 title(main = 'Temperature')
 
-weather$week <- as.numeric(format(weather$date, '%U'))
+weather$week <- as.numeric(format(as.Date(weather$date, format = '%Y-%m-%d'), '%U'))
 temp <- weather %>%
   group_by(week) %>%
   summarise(rain = sum(PrecipitationIn),
