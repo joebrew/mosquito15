@@ -135,8 +135,7 @@ g +
   geom_vline(xintercept = val, lwd = 2, alpha = 0.5)
 ```
 
-Our model had predicted that the number of mosquitoes would remain elevated - but not grow - from the middle to end of September.  In reality, the number of mosquitoes _did_ continue grow, peaking on September 24th at the highest levels so far this year.  Recent weather conditions suggest a decline
-As predicted, the number of mosquitoes rose through mid-September. Our model suggests that numbers will remain elevated through the end of the month and into the first few days of October, but will thereafter gradually decline.   
+Our model predicted high but flat-lining levels through the end of September and beginning of October.  However, in reality, the increasing trend from mid-September continued, with the most recent trapping showing more mosquitoes than at any other point this year.  Weather conditions suggest that we have already reached the peak, and that the number of moquitoes will begin declining. 
 
 ```{r}
 past_temp <- ts[which(ts$date > (Sys.Date() - 60)),]
@@ -255,7 +254,7 @@ right <- future[which(future$date > recent), c('date', 'trap', 'predicted')]
 right$trap <- as.numeric(as.character(right$trap))
 temp <- left_join(x = left, y = right)
 temp$mosquitoes <- temp$predicted
-temp <- temp[which(temp$date %in% as.Date(c('2015-10-03', '2015-10-07', '2015-10-11'))),] ##############!!!!!!!!!!!!!!!!!!
+temp <- temp[which(temp$date %in% as.Date(c('2015-10-10', '2015-10-14', '2015-10-18'))),] ##############!!!!!!!!!!!!!!!!!!
 
 map <- get_map(location = c(lon = mean(temp$long), 
                             lat = mean(temp$lat)),
