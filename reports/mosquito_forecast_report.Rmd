@@ -135,7 +135,7 @@ g +
   geom_vline(xintercept = val, lwd = 2, alpha = 0.5)
 ```
 
-Our model predicted high but flat-lining levels through the end of September and beginning of October.  However, in reality, the increasing trend from mid-September continued, with the most recent trapping showing more mosquitoes than at any other point this year.  Weather conditions suggest that we have already reached the peak, and that the number of moquitoes will begin declining. 
+As predicted, the late September spike in mosquitoes has subsided.  Our model predicts a continued decline down to low-normal levels throughout the rest of October.
 
 ```{r}
 past_temp <- ts[which(ts$date > (Sys.Date() - 60)),]
@@ -190,7 +190,7 @@ g + geom_point() +
 
 # Disease details  
 
-Vectors of diseases of concern appear relatively evenly distributed throughout the county. In recent weeks, the number of mosquitoes capable of carrying SLEV has increased substantially and remains elevated, particularly in Hawthorne. 
+Vectors of diseases of concern appear relatively evenly distributed throughout the county. In recent weeks, the number of mosquitoes capable of carrying SLEV increased substantially but no longer remains as elevated as during September.
 
 ```{r, fig.height = 8, fig.width = 8}
 # Get disease types
@@ -254,7 +254,7 @@ right <- future[which(future$date > recent), c('date', 'trap', 'predicted')]
 right$trap <- as.numeric(as.character(right$trap))
 temp <- left_join(x = left, y = right)
 temp$mosquitoes <- temp$predicted
-temp <- temp[which(temp$date %in% as.Date(c('2015-10-10', '2015-10-14', '2015-10-18'))),] ##############!!!!!!!!!!!!!!!!!!
+temp <- temp[which(temp$date %in% as.Date(c('2015-10-18', '2015-10-24', '2015-10-28'))),] ##############!!!!!!!!!!!!!!!!!!
 
 map <- get_map(location = c(lon = mean(temp$long), 
                             lat = mean(temp$lat)),
