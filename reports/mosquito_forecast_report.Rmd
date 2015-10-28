@@ -20,6 +20,9 @@ header-includes:
 ```{r, echo = FALSE}
 library(knitr)
 opts_chunk$set(comment=NA, warning = FALSE, message=FALSE, echo = FALSE)
+
+# Set report date (for when model build and report are on different days)
+report_date <- Sys.Date()
 ```
 
 
@@ -74,8 +77,6 @@ boundary <- readOGR('../geo_data/alachua_boundary/', 'Alachua_Boundary')
 
 # Trap locations
 trap_locations <- read.csv('../geo_data/traplatlong.csv')
-
-
 ```
 
 ```{r, fig = TRUE, echo=FALSE, fig.align = 'center', warning = FALSE, message = FALSE}
@@ -138,7 +139,7 @@ g +
 As predicted, the late September spike in mosquitoes has subsided  Our model predicts continued medium-low levels throughout the rest of October.
 
 ```{r}
-past_temp <- ts[which(ts$date > (Sys.Date() - 60)),]
+past_temp <- ts[which(ts$date > (report_date - 60)),]
 future_temp <- future_agg
 
 future_temp <- rbind.fill(past_temp[nrow(past_temp),], future_temp)
