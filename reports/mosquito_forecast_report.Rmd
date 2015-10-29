@@ -136,7 +136,7 @@ g +
   geom_vline(xintercept = val, lwd = 2, alpha = 0.5)
 ```
 
-As predicted, the late September spike in mosquitoes has subsided  Our model predicts continued medium-low levels throughout the rest of October.
+The number of mosquitoes continues to decline. Our model predicts medium-low levels throughout the rest of October.
 
 ```{r}
 past_temp <- ts[which(ts$date > (report_date - 60)),]
@@ -255,7 +255,7 @@ right <- future[which(future$date > recent), c('date', 'trap', 'predicted')]
 right$trap <- as.numeric(as.character(right$trap))
 temp <- left_join(x = left, y = right)
 temp$mosquitoes <- temp$predicted
-temp <- temp[which(temp$date %in% as.Date(c('2015-10-30', '2015-11-02', '2015-11-05'))),] ##############!!!!!!!!!!!!!!!!!!
+temp <- temp[which(temp$date %in% as.Date(c( '2015-11-02', '2015-11-05', '2015-11-07'))),] ##############!!!!!!!!!!!!!!!!!!
 
 map <- get_map(location = c(lon = mean(temp$long), 
                             lat = mean(temp$lat)),
