@@ -136,7 +136,7 @@ g +
   geom_vline(xintercept = val, lwd = 2, alpha = 0.5)
 ```
 
-The number of mosquitoes continues to decline. Our model predicts medium-low levels throughout the rest of October.
+The number of mosquitoes remains at non-peak levels.  Though there was a slight rise in the last week, it was well within the range of the model's predicted flatlining.  Our model predicts medium-low levels throughout the rest of November.
 
 ```{r}
 past_temp <- ts[which(ts$date > (report_date - 60)),]
